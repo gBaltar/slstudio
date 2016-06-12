@@ -7,7 +7,9 @@
 #include <opencv2/opencv.hpp>
 
 #include <pcl/filters/statistical_outlier_removal.h>
+#include <pcl/filters/filter_indices.h>
 #include <pcl/io/pcd_io.h>
+#include <pcl/io/ply_io.h>
 
 void SLTriangulatorWorker::setup(){
 
@@ -100,14 +102,6 @@ void SLTriangulatorWorker::triangulatePointCloud(cv::Mat up, cv::Mat vp, cv::Mat
 //    // memcpy everything
 //    memcpy(&pointCloudPCL->points[0], pointCloudPadded.data, pointCloudPadded.rows*pointCloudPadded.cols*sizeof(pcl::PointXYZRGB));
 
-//    // filtering
-//    pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> filter;
-//    filter.setMeanK(5);
-//    filter.setStddevMulThresh(1.0);
-//    filter.setInputCloud(pointCloudPCL);
-//    pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloudFiltered(new pcl::PointCloud<pcl::PointXYZRGB>);
-//    filter.filter(*pointCloudFiltered);
-
     // Emit result
     emit newPointCloud(pointCloudPCL);
 
@@ -115,8 +109,30 @@ void SLTriangulatorWorker::triangulatePointCloud(cv::Mat up, cv::Mat vp, cv::Mat
 
     if(writeToDisk){
         QString fileName = QDateTime::currentDateTime().toString("yyyyMMdd_HHmmsszzz");
-        fileName.append(".pcd");
-        pcl::io::savePCDFileBinary(fileName.toStdString(), *pointCloudPCL);
+        pcl::io::savePCDFileBinary((fileName + ".pcd").toStdString(), *pointCloudPCL);
+
+        std::vector<int> indices;
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr pclClean(new pcl::PointCloud<pcl::PointXYZRGB>);
+        pcl::removeNaNFromPointCloud(*pointCloudPCL, *pclClean, indices);
+
+        for(int row=0; row<pclClean->height; row++) {
+            int offset = row * pclClean->width;
+            for(int col=0; col<pclClean->width; col++) {
+                pcl::PointXYZRGB &point = pclClean->points[offset + col];
+                point.x /= 1000.0; point.y /= 1000.0; point.z /= 1000.0;
+            }
+        }
+
+        // filtering
+        pcl::StatisticalOutlierRemoval<pcl::PointXYZRGB> filter;
+        filter.setMeanK(5);
+        filter.setStddevMulThresh(1.0);
+        filter.setInputCloud(pclClean);
+        pcl::PointCloud<pcl::PointXYZRGB>::Ptr pointCloudFiltered(new pcl::PointCloud<pcl::PointXYZRGB>);
+        filter.filter(*pointCloudFiltered);
+
+        pcl::io::savePLYFileASCII((fileName + ".ply").toStdString(), *pclClean);
+        pcl::io::savePLYFileASCII((fileName + "_filtered.ply").toStdString(), *pointCloudFiltered);
     }
 
     //emit finished();

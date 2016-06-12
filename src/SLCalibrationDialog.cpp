@@ -15,6 +15,8 @@
 
 #include "CalibratorLocHom.h"
 #include "CalibratorRBF.h"
+#include "CalibratorIntensity.h"
+#include "CalibratorGrayCode.h"
 
 #include "cvtools.h"
 
@@ -81,6 +83,8 @@ SLCalibrationDialog::SLCalibrationDialog(SLStudio *parent) : QDialog(parent), ui
 
     // Create calibrator
     calibrator = new CalibratorLocHom(screenCols, screenRows);
+    //calibrator = new CalibratorIntensity(screenCols, screenRows);
+    //calibrator = new CalibratorGrayCode(screenCols, screenRows);
 
     connect(calibrator, SIGNAL(newSequenceResult(cv::Mat, unsigned int, bool)), this, SLOT(onNewSequenceResult(cv::Mat,uint,bool)));
 

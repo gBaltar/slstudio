@@ -75,6 +75,8 @@ HEADERS  += SLStudio.h \
         tracker/PoseFilter.h \
         cvtools.h \
         camera/CameraOpenCV.h
+        calibrator/CalibratorIntensity.h \
+        calibrator/CalibratorGrayCode.h
 
 
 SOURCES += main.cpp \
@@ -126,6 +128,7 @@ SOURCES += main.cpp \
         tracker/TrackerPCL.cpp \
         tracker/PoseFilter.cpp \
         camera/CameraOpenCV.cpp
+        calibrator/CalibratorGrayCode.cpp
 
 INCLUDEPATH += camera/ projector/ codec/ triangulator/ calibrator/ tracker/
 
